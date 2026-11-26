@@ -226,12 +226,18 @@ class MainActivity : AppCompatActivity() {
   });
 
   // 6. Meta
+    // 6. Meta (Purana code replace karein)
   let outputPath, gradleTask;
-  if (cfg.buildType === 'AAB') { gradleTask = 'bundleRelease'; outputPath = 'app/build/outputs/bundle/release/app-release.aab'; }
-  else if (cfg.variant === 'release') { gradleTask = 'assembleRelease'; outputPath = 'app/build/outputs/apk/release/app-release.apk'; }
-  else { gradleTask = 'assembleDebug'; outputPath = 'app/build/outputs/apk/debug/app-debug.apk'; }
+  if (cfg.buildType === 'AAB') { 
+    gradleTask = 'bundleRelease'; 
+    outputPath = 'app/build/outputs/bundle/release/app-release.aab'; 
+  } else if (cfg.variant === 'release') { 
+    gradleTask = 'assembleRelease'; 
+    outputPath = 'app/build/outputs/apk/release/app-release.apk'; 
+  } else { 
+    gradleTask = 'assembleDebug'; 
+    outputPath = 'app/build/outputs/apk/debug/app-debug.apk'; 
+  }
 
+  // Ye line add karein taaki meta.json ban jaye
   write(path.join(ROOT, 'build-meta.json'), JSON.stringify({ buildType: cfg.buildType, variant: cfg.variant, gradleTask, outputPath }, null, 2));
-}
-
-try { main(); } catch (e) { console.error(e); process.exit(1); }
