@@ -67,6 +67,7 @@ jobs:
       - name: Build APK/AAB
         run: |
           set -e
+          set -o pipefail  # Ye line Gradle ka asli error pakadne ke liye hai
           cd build-workspace
           BUILD_TYPE=$(node -e "console.log(require('./build-meta.json').buildType)")
           VARIANT=$(node -e "console.log(require('./build-meta.json').variant)")
@@ -79,11 +80,30 @@ jobs:
             gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee gradle-log.txt
           fi
 
+      - name: Locate Artifact
+        id: locate_artifact
+        run: |
+          cd build-workspace
+          BUILD_TYPE=$(node -e "console.log(require('./build-meta.json').buildType)")
+          if [ "$BUILD_TYPE" = "AAB" ]; then
+            FILE=$(find app/build/outputs/bundle -name "*.aab" | head -n 1)
+          else
+            FILE=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
+          fi
+          if [ -z "$FILE" ]; then
+            echo "Error: Could not find the built artifact!"
+            exit 1
+          fi
+          echo "Artifact found: $FILE"
+          echo "artifact_path=$FILE" >> $GITHUB_OUTPUT
+
       - name: Upload artifact
         run: node scripts/report.js "APK/AAB Generation" 80 "Uploading artifact to GitHub Release"
 
       - name: Upload release and finalize state
         run: node scripts/upload-release.js
+        env:
+          ARTIFACT_PATH: build-workspace/${{ steps.locate_artifact.outputs.artifact_path }}
 
       - name: On failure report error
         if: failure()
