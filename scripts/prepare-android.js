@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 const ROOT = 'build-workspace';
 const BUILD_DATA = 'build-data';
@@ -39,7 +38,8 @@ function main() {
   const srcDir = path.join(ROOT, 'app/src/main/java', pkgPath);
   ensureDir(srcDir);
 
-  // 1. Gradle Files
+  // 1. Gradle Files (FIX: Added gradle.properties for AndroidX support)
+  write(path.join(ROOT, 'gradle.properties'), `android.useAndroidX=true\nandroid.enableJetifier=true\norg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8`);
   write(path.join(ROOT, 'settings.gradle'), `pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }\ndependencyResolutionManagement { repositories { google(); mavenCentral() } }\ninclude ':app'`);
   write(path.join(ROOT, 'build.gradle'), `plugins { id 'com.android.application' version '8.5.2' apply false; id 'org.jetbrains.kotlin.android' version '1.9.24' apply false }`);
   
