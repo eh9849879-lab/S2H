@@ -78,9 +78,9 @@ ${permsBlock}
 </manifest>`);
 
   // 3. MainActivity (Kotlin) with REAL Permission Handling
-  const needsCamera = cfg.permissions.includes('CAMERA') ? 'true' : 'false';
-  const needsMic = cfg.permissions.includes('RECORD_AUDIO') ? 'true' : 'false';
-  const needsLocation = cfg.permissions.includes('ACCESS_FINE_LOCATION') ? 'true' : 'false';
+  const needsCamera = (cfg.permissions || []).includes('CAMERA') ? 'true' : 'false';
+  const needsMic = (cfg.permissions || []).includes('RECORD_AUDIO') ? 'true' : 'false';
+  const needsLocation = (cfg.permissions || []).includes('ACCESS_FINE_LOCATION') ? 'true' : 'false';
 
   write(path.join(srcDir, 'MainActivity.kt'), `package ${pkg}
 
@@ -116,7 +116,6 @@ class MainActivity : AppCompatActivity() {
             ${c.zoom ? 'setSupportZoom(true); builtInZoomControls = true; displayZoomControls = false' : ''}
         }
 
-        // Request Runtime Permissions upfront if needed
         requestAppPermissions()
 
         webView.webChromeClient = object : WebChromeClient() {
@@ -226,7 +225,6 @@ class MainActivity : AppCompatActivity() {
   });
 
   // 6. Meta
-    // 6. Meta (Purana code replace karein)
   let outputPath, gradleTask;
   if (cfg.buildType === 'AAB') { 
     gradleTask = 'bundleRelease'; 
@@ -239,5 +237,8 @@ class MainActivity : AppCompatActivity() {
     outputPath = 'app/build/outputs/apk/debug/app-debug.apk'; 
   }
 
-  // Ye line add karein taaki meta.json ban jaye
   write(path.join(ROOT, 'build-meta.json'), JSON.stringify({ buildType: cfg.buildType, variant: cfg.variant, gradleTask, outputPath }, null, 2));
+}
+
+try { main(); } 
+catch (e) { console.error(e); process.exit(1); }
