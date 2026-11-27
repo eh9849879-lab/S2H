@@ -38,9 +38,11 @@ function main() {
   const srcDir = path.join(ROOT, 'app/src/main/java', pkgPath);
   ensureDir(srcDir);
 
-  // 1. Gradle Files (FIX: Added gradle.properties for AndroidX support)
+  // 1. Gradle Files (Properties and Settings)
   write(path.join(ROOT, 'gradle.properties'), `android.useAndroidX=true\nandroid.enableJetifier=true\norg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8`);
+  
   write(path.join(ROOT, 'settings.gradle'), `pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }\ndependencyResolutionManagement { repositories { google(); mavenCentral() } }\ninclude ':app'`);
+  
   write(path.join(ROOT, 'build.gradle'), `plugins { id 'com.android.application' version '8.5.2' apply false; id 'org.jetbrains.kotlin.android' version '1.9.24' apply false }`);
   
   if (isRelease) {
@@ -50,7 +52,8 @@ function main() {
     write(path.join(ROOT, 'signing.properties'), `storePassword=${cfg.signing.storePassword}\nkeyAlias=${cfg.signing.alias}\nkeyPassword=${cfg.signing.keyPassword}`);
   }
 
-  write(path.join(ROOT, 'app/build.gradle'), `plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
+  write(path.join(ROOT, 'app/build.gradle'), `import java.io.FileInputStream
+plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
 def signingProps = new Properties(); def signingFile = rootProject.file('signing.properties')
 if (signingFile.exists()) { signingProps.load(new FileInputStream(signingFile)) }
 android {
@@ -63,7 +66,7 @@ android {
 }
 dependencies { implementation 'androidx.appcompat:appcompat:1.7.0'; implementation 'androidx.core:core-ktx:1.13.1'; implementation 'androidx.webkit:webkit:1.11.0'; implementation 'com.google.android.material:material:1.12.0' }`);
 
-  // 2. Manifest with Selected Permissions
+  // 2. Manifest
   const permsBlock = (cfg.permissions || []).map(p => ANDROID_PERMISSIONS[p] ? `    <uses-permission android:name="${ANDROID_PERMISSIONS[p]}" />` : null).filter(Boolean).join('\n');
   const orientation = c.orientation === 'landscape' ? 'landscape' : c.orientation === 'auto' ? 'fullSensor' : 'portrait';
 
@@ -77,7 +80,7 @@ ${permsBlock}
     </application>
 </manifest>`);
 
-  // 3. MainActivity (Kotlin) with REAL Permission Handling
+  // 3. MainActivity (Kotlin) - Fixed Syntax
   const needsCamera = (cfg.permissions || []).includes('CAMERA') ? 'true' : 'false';
   const needsMic = (cfg.permissions || []).includes('RECORD_AUDIO') ? 'true' : 'false';
   const needsLocation = (cfg.permissions || []).includes('ACCESS_FINE_LOCATION') ? 'true' : 'false';
@@ -195,7 +198,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
         if (requestCode == FILE_CHOOSER_RESULT_CODE) {
-            filePathCallback?.onReceiveValue(FileChooserParams.parseResult(resultCode, data))
+            filePathCallback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data))
             filePathCallback = null
         } else {
             super.onActivityResult(requestCode, resultCode, data)
